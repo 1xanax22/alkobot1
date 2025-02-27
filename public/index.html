@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Не пью!</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Главный экран (таймер и друзья) -->
+        <div id="homeScreen" class="screen active">
+            <h1>Не пью!</h1>
+            <div id="timer" class="timer">Нажми "Старт"</div>
+            <div class="button-group">
+                <button id="startBtn">Старт</button>
+                <button id="resetBtn" style="display: none;">Сбросить</button>
+            </div>
+            <h2>Мои друзья</h2>
+            <ul id="friendsList"></ul>
+            <div class="input-group">
+                <input type="text" id="friendUsername" placeholder="Введи ник друга (с @ или без)">
+                <button id="addFriendBtn">Добавить</button>
+            </div>
+            <div class="invite-section">
+                <button id="inviteFriendBtn">Пригласить друга</button>
+            </div>
+        </div>
+
+        <!-- Экран статистики -->
+        <div id="statsScreen" class="screen">
+            <h1>Статистика друзей</h1>
+            <div id="statsContent">
+                <p>Друзей: <span id="friendCount">0</span></p>
+                <p>Общее время трезвости: <span id="totalSoberTime">0 дн, 0 ч, 0 мин, 0 сек</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижняя панель навигации -->
+    <div class="nav-bar">
+        <button id="navHome" class="nav-btn">Главная</button>
+        <button id="navStats" class="nav-btn">Статистика</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
