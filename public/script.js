@@ -16,7 +16,7 @@ fetch('/api/firebase')
         return response.json();
     })
     .then(data => {
-        const { firebaseConfig, botToken, botUsername } = data;
+        const { firebaseConfig, botUsername } = data;
 
         // Проверка загрузки Firebase SDK
         if (typeof firebase === 'undefined') {

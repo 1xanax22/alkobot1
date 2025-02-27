@@ -21,6 +21,6 @@ export default function handler(req, res) {
 
     res.status(200).json({
         firebaseConfig: clientConfig,
-        botToken: process.env.BOT_TOKEN
+        botUsername: process.env.BOT_USERNAME // Отправляем только имя бота
     });
 }
