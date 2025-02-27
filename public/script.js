@@ -263,19 +263,25 @@ inviteFriendBtn.addEventListener('click', () => {
     tg.switchInlineQuery('Присоединяйся к челленджу трезвости!');
 });
 
-// Функция для навигации
-function handleNavigation(btn, screen) {
-    return () => {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        screen.classList.add('active');
-        btn.classList.add('active');
-        if (screen === statsScreen) updateStats();
-    };
-}
+// Обработчики событий для навигации
+navHome.addEventListener('click', () => {
+    homeScreen.style.display = 'block';
+    statsScreen.style.display = 'none';
+    navHome.classList.add('active');
+    navStats.classList.remove('active');
+});
 
-navHome.addEventListener('click', handleNavigation(navHome, homeScreen));
-navStats.addEventListener('click', handleNavigation(navStats, statsScreen));
+navStats.addEventListener('click', () => {
+    homeScreen.style.display = 'none';
+    statsScreen.style.display = 'block';
+    navStats.classList.add('active');
+    navHome.classList.remove('active');
+});
+
+// Инициализация состояния навигации
+homeScreen.style.display = 'block';
+statsScreen.style.display = 'none';
+navHome.classList.add('active');
 
 // Функция для обновления статистики
 function updateStats() {
