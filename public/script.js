@@ -22,6 +22,8 @@ const database = firebase.database();
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
+const setDateBtn = document.getElementById('setDateBtn');
+const customDateInput = document.getElementById('customDate');
 const friendsList = document.getElementById('friendsList');
 const friendUsernameInput = document.getElementById('friendUsername');
 const addFriendBtn = document.getElementById('addFriendBtn');
@@ -31,16 +33,14 @@ const navStats = document.getElementById('navStats');
 const homeScreen = document.getElementById('homeScreen');
 const statsScreen = document.getElementById('statsScreen');
 const statsContent = document.getElementById('statsContent');
-const setDateBtn = document.getElementById('setDateBtn');
-const customDateInput = document.getElementById('customDate');
 
 // Получение ID пользователя из Telegram
 const userId = tg.initDataUnsafe?.user?.id || 'anonymous';
 
 // Хранение данных
-let startTime = localStorage.getItem('startTime');
+let startTime = null;
 let timerInterval;
-let friends = JSON.parse(localStorage.getItem('friends') || '[]');
+let friends = [];
 
 // Функция обновления таймера
 function updateTimer() {
@@ -79,11 +79,12 @@ function stopRealtimeTimer() {
 // Обработчики событий для кнопок
 startBtn.addEventListener('click', () => {
     startTime = new Date().toISOString();
-    localStorage.setItem('startTime', startTime);
     
     // Сохраняем в базу данных
     database.ref(`users/${userId}`).update({
-        startTime: startTime
+        startTime: startTime,
+        username: tg.initDataUnsafe?.user?.username || null,
+        firstName: tg.initDataUnsafe?.user?.first_name || null
     });
 
     startBtn.style.display = 'none';
@@ -93,7 +94,6 @@ startBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', () => {
     startTime = null;
-    localStorage.removeItem('startTime');
     
     // Удаляем из базы данных
     database.ref(`users/${userId}/startTime`).remove();
@@ -113,7 +113,6 @@ setDateBtn.addEventListener('click', () => {
 customDateInput.addEventListener('change', () => {
     const selectedDate = new Date(customDateInput.value);
     startTime = selectedDate.toISOString();
-    localStorage.setItem('startTime', startTime);
     
     // Сохраняем в базу данных
     database.ref(`users/${userId}`).update({
@@ -133,7 +132,7 @@ function renderFriends() {
         const li = document.createElement('li');
         li.className = 'friend-item';
         
-        // Получаем время друга из базы данных
+        // Получаем данные друга из базы данных
         database.ref('users').once('value')
             .then((snapshot) => {
                 const users = snapshot.val();
@@ -153,14 +152,18 @@ function renderFriends() {
                         `${time.days}д ${time.hours}ч ${time.minutes}м` : 
                         'Не начал';
                     
+                    const displayName = foundUser.firstName ? 
+                        `${foundUser.firstName} (@${friend})` : 
+                        `@${friend}`;
+                    
                     li.innerHTML = `
-                        <span class="friend-name">${friend}</span>
+                        <span class="friend-name">${displayName}</span>
                         <span class="friend-time">${timeStr}</span>
                         <button class="delete-friend" data-index="${index}">✕</button>
                     `;
                 } else {
                     li.innerHTML = `
-                        <span class="friend-name">${friend}</span>
+                        <span class="friend-name">@${friend}</span>
                         <span class="friend-time">Не найден</span>
                         <button class="delete-friend" data-index="${index}">✕</button>
                     `;
@@ -169,7 +172,7 @@ function renderFriends() {
             .catch(error => {
                 console.error('Ошибка при загрузке времени друга:', error);
                 li.innerHTML = `
-                    <span class="friend-name">${friend}</span>
+                    <span class="friend-name">@${friend}</span>
                     <span class="friend-time">Ошибка</span>
                     <button class="delete-friend" data-index="${index}">✕</button>
                 `;
@@ -210,7 +213,6 @@ addFriendBtn.addEventListener('click', () => {
             
             if (userExists) {
                 friends.push(username);
-                localStorage.setItem('friends', JSON.stringify(friends));
                 
                 // Добавляем друга в базу данных
                 database.ref(`users/${userId}/friends`).set(friends);
@@ -232,7 +234,6 @@ friendsList.addEventListener('click', (e) => {
     if (e.target.classList.contains('delete-friend')) {
         const index = e.target.dataset.index;
         friends.splice(index, 1);
-        localStorage.setItem('friends', JSON.stringify(friends));
         
         // Обновляем список друзей в базе данных
         database.ref(`users/${userId}/friends`).set(friends);
@@ -300,24 +301,42 @@ function updateStats() {
         });
 }
 
-// Инициализация
-if (startTime) {
-    startBtn.style.display = 'none';
-    resetBtn.style.display = 'inline';
-    startRealtimeTimer();
-}
+// Слушаем изменения данных пользователя в Firebase
+database.ref(`users/${userId}`).on('value', (snapshot) => {
+    const userData = snapshot.val() || {};
+    
+    // Обновляем startTime
+    if (userData.startTime !== startTime) {
+        startTime = userData.startTime;
+        if (startTime) {
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'inline';
+            startRealtimeTimer();
+        } else {
+            startBtn.style.display = 'inline';
+            resetBtn.style.display = 'none';
+            stopRealtimeTimer();
+            updateTimer();
+        }
+    }
+    
+    // Обновляем список друзей
+    if (userData.friends) {
+        friends = userData.friends;
+        renderFriends();
+    }
+});
 
-renderFriends();
-
-// Загружаем данные из Firebase при старте
+// Инициализация при загрузке страницы
 database.ref(`users/${userId}`).once('value')
     .then((snapshot) => {
         const userData = snapshot.val() || {};
         
-        // Сохраняем username пользователя
+        // Сохраняем username и имя пользователя
         if (tg.initDataUnsafe?.user?.username) {
             database.ref(`users/${userId}`).update({
-                username: tg.initDataUnsafe.user.username
+                username: tg.initDataUnsafe.user.username,
+                firstName: tg.initDataUnsafe.user.first_name || null
             });
         }
         
@@ -332,7 +351,6 @@ database.ref(`users/${userId}`).once('value')
         // Восстанавливаем список друзей
         if (userData.friends) {
             friends = userData.friends;
-            localStorage.setItem('friends', JSON.stringify(friends));
         }
         
         renderFriends();
