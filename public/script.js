@@ -81,9 +81,9 @@ fetch('/api/firebase')
         // Хранение данных
         let startTime = secureRead(`startTime_${userId}`);
         let friends = secureRead(`friends_${userId}`) || [];
-        let timerInterval = null; // Не используется для статичного таймера
+        let timerInterval = null;
 
-        // Функция обновления статичного таймера
+        // Функция обновления таймера
         function updateTimer() {
             if (!startTime) {
                 timerDisplay.innerText = 'Нажми "Старт"!';
@@ -106,16 +106,27 @@ fetch('/api/firebase')
             }).catch(error => console.error("Ошибка сохранения в Firebase:", error));
         }
 
-        // Вызываем обновление таймера при старте или сбросе
-        function updateTimerOnce() {
-            if (timerInterval) clearInterval(timerInterval);
+        // Обновляем таймер каждую секунду
+        function startRealtimeTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
             updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Останавливаем таймер
+        function stopRealtimeTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
         }
 
         if (startTime) {
             startBtn.style.display = 'none';
             resetBtn.style.display = 'inline';
-            updateTimerOnce();
+            startRealtimeTimer();
         }
 
         startBtn.addEventListener('click', () => {
@@ -123,13 +134,12 @@ fetch('/api/firebase')
             secureStore(`startTime_${userId}`, startTime);
             startBtn.style.display = 'none';
             resetBtn.style.display = 'inline';
-            updateTimerOnce();
+            startRealtimeTimer();
         });
 
         resetBtn.addEventListener('click', () => {
             startTime = null;
-            clearInterval(timerInterval);
-            timerInterval = null;
+            stopRealtimeTimer();
             secureStore(`startTime_${userId}`, startTime);
             timerDisplay.innerText = 'Нажми "Старт"!';
             timerDisplay.classList.remove('active');
@@ -138,6 +148,7 @@ fetch('/api/firebase')
             database.ref(`users/${userId}`).remove().catch(error => console.error("Ошибка удаления из Firebase:", error));
         });
 
+        // Функция для рендеринга списка друзей
         function renderFriends() {
             friendsList.innerHTML = '';
             friends.forEach(friend => {
@@ -152,6 +163,7 @@ fetch('/api/firebase')
         }
         renderFriends();
 
+        // Функция для расчета времени
         function calculateTime(startTimeISO) {
             const start = new Date(startTimeISO);
             const now = new Date();
@@ -163,6 +175,7 @@ fetch('/api/firebase')
             return `${days} дн, ${hours} ч, ${minutes} мин, ${seconds} сек`;
         }
 
+        // Добавление друга
         addFriendBtn.addEventListener('click', async () => {
             let username = friendUsernameInput.value.trim();
             if (username.startsWith('@')) username = username.slice(1);
@@ -236,6 +249,7 @@ fetch('/api/firebase')
             });
         }
 
+        // Функция для навигации
         function handleNavigation(btn, screen) {
             return function () {
                 homeScreen.classList.remove('active');
@@ -254,6 +268,7 @@ fetch('/api/firebase')
         navStats.addEventListener('click', handleNavigation(navStats, statsScreen));
         navStats.addEventListener('touchstart', handleNavigation(navStats, statsScreen));
 
+        // Функция для обновления статистики
         function updateStats() {
             const friendCountValue = friends.length;
             friendCount.textContent = friendCountValue;
@@ -278,6 +293,7 @@ fetch('/api/firebase')
             totalSoberTime.textContent = `${days} дн, ${hours} ч, ${minutes} мин, ${seconds} сек`;
         }
 
+        // Событие окончания анимации
         friendsList.addEventListener('animationend', (e) => {
             if (e.animationName === 'fadeIn') e.target.style.opacity = 1;
         });
