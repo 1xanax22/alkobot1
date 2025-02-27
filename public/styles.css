@@ -1,48 +1,56 @@
 /* Импорт шрифта Roboto через Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
+* {
+    font-family: 'Trebuchet MS', sans-serif;
+}
+
 body {
     margin: 0;
-    font-family: 'Trebuchet MS', sans-serif;
     background-color: #1a1a1a;
     color: #ffffff;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     overflow: hidden;
 }
 
 .container {
     flex: 1;
     text-align: center;
-    background-color: #181818;
     padding: 20px;
-    border-radius: 15px 15px 0 0;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .screen {
     display: none;
+    flex: 1;
 }
 
 .screen.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 h1 {
-    margin: 0;
+    margin: 20px 0;
     font-size: 3em;
     font-weight: 700;
+}
+
+h2 {
+    margin: 15px 0;
 }
 
 .timer {
     font-size: 1.5em;
     margin: 20px 0;
     padding: 15px;
+    background: rgba(0, 0, 0, 0.5);
     border-radius: 100px;
     box-shadow: 0 0 100px rgb(54 164 0 / 79%), 0 0 50px rgb(19 255 0 / 39%);
-    transition: none;
 }
 
 .timer.active {
@@ -64,15 +72,13 @@ button {
     border: none;
     border-radius: 15px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease;
     font-size: 1em;
-    font-family: 'Trebuchet MS', sans-serif;
-    box-shadow: 0 0 5px rgb(100 255 23);
+    box-shadow: 0 0 15px rgba(0, 204, 0, 0.5);
 }
 
 button:hover {
     background-color: #009900;
-    transform: scale(1.05);
 }
 
 button:active {
@@ -80,15 +86,17 @@ button:active {
 }
 
 input {
-    padding: 10px;
+    padding: 12px;
     margin: 5px;
-    border: 1px solid #444444;
+    border: none;
     border-radius: 5px;
-    background-color: #333333;
+    background-color: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    font-family: 'Trebuchet MS', sans-serif;
-    flex: 1;
-    max-width: 200px;
+    width: 200px;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 ul {
@@ -104,13 +112,11 @@ li {
     background-color: #3d3d3d;
     border-radius: 5px;
     animation: fadeIn 1s ease-in;
-    font-family: 'Trebuchet MS', sans-serif;
 }
 
 #statsContent p {
     font-size: 1.2em;
     margin: 10px 0;
-    font-family: 'Trebuchet MS', sans-serif;
 }
 
 .invite-section {
@@ -128,7 +134,6 @@ li {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
     font-size: 1.1em;
-    font-family: 'Trebuchet MS', sans-serif;
 }
 
 .invite-section button:hover {
@@ -140,55 +145,52 @@ li {
     background-color: #007700;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Нижняя панель навигации */
-.nav-bar {
+.bottom-nav {
     display: flex;
-    justify-content: space-around;
-    background-color: #2d2d2d;
-    padding: 15px 0;
-    border-top: 1px solid #444444;
-    box-shadow: 0 -2px 5px rgb(255 255 255 / 66%);
     position: fixed;
-    bottom: 10px;
-    width: 100%;
-    height: 65px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1a1a1a;
+    border-top: 2px solid #333;
 }
 
 .nav-btn {
     flex: 1;
-    padding: 12px 18px;
-    background-color: #333333;
+    padding: 15px;
+    margin: 0;
+    background: none;
     color: #ffffff;
     border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    margin: 0 4px;
-    font-size: 1em;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Trebuchet MS', sans-serif;
-    box-shadow: 0 2px 4px rgb(255 0 0);
-}
-
-.nav-btn.active {
-    background-color: #00cc00;
-    color: #1a1a1a;
-    font-weight: 500;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .nav-btn:hover {
-    background-color: #ffffff;
-    transform: scale(1.02);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-btn:hover:not(.active) {
-    background-color: #444444;
+.nav-btn.active {
+    color: #00cc00;
+    box-shadow: inset 0 -2px 0 #00cc00;
+}
+
+#inviteFriendBtn {
+    margin-top: 20px;
+    width: 80%;
+    max-width: 300px;
+    align-self: center;
+}
+
+.input-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
