@@ -107,10 +107,79 @@ function renderFriends() {
     friendsList.innerHTML = '';
     friends.forEach((friend, index) => {
         const li = document.createElement('li');
-        li.textContent = friend;
+        li.className = 'friend-item';
+        
+        // Получаем время друга из базы данных
+        database.ref(`users`).orderByChild('username').equalTo(friend).once('value')
+            .then((snapshot) => {
+                const userData = snapshot.val();
+                const userId = Object.keys(userData)[0];
+                const startTime = userData[userId]?.startTime;
+                
+                const time = calculateTime(startTime);
+                const timeStr = startTime ? 
+                    `${time.days}д ${time.hours}ч ${time.minutes}м` : 
+                    'Не начал';
+                
+                li.innerHTML = `
+                    <span class="friend-name">${friend}</span>
+                    <span class="friend-time">${timeStr}</span>
+                    <button class="delete-friend" data-index="${index}">✕</button>
+                `;
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке времени друга:', error);
+                li.innerHTML = `
+                    <span class="friend-name">${friend}</span>
+                    <span class="friend-time">Ошибка</span>
+                    <button class="delete-friend" data-index="${index}">✕</button>
+                `;
+            });
+        
         friendsList.appendChild(li);
     });
 }
+
+// Добавление друга
+addFriendBtn.addEventListener('click', () => {
+    const username = friendUsernameInput.value.trim();
+    if (username && !friends.includes(username)) {
+        // Проверяем существование пользователя
+        database.ref('users').orderByChild('username').equalTo(username).once('value')
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    friends.push(username);
+                    localStorage.setItem('friends', JSON.stringify(friends));
+                    
+                    // Добавляем друга в базу данных
+                    database.ref(`users/${userId}/friends`).set(friends);
+                    
+                    renderFriends();
+                    friendUsernameInput.value = '';
+                } else {
+                    alert('Пользователь не найден');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при проверке пользователя:', error);
+                alert('Ошибка при добавлении друга');
+            });
+    }
+});
+
+// Обработчик удаления друзей
+friendsList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('delete-friend')) {
+        const index = e.target.dataset.index;
+        friends.splice(index, 1);
+        localStorage.setItem('friends', JSON.stringify(friends));
+        
+        // Обновляем список друзей в базе данных
+        database.ref(`users/${userId}/friends`).set(friends);
+        
+        renderFriends();
+    }
+});
 
 // Функция для расчета времени
 function calculateTime(startTimeISO) {
@@ -127,21 +196,6 @@ function calculateTime(startTimeISO) {
         seconds: Math.floor((diff % (1000 * 60)) / 1000)
     };
 }
-
-// Добавление друга
-addFriendBtn.addEventListener('click', () => {
-    const username = friendUsernameInput.value.trim();
-    if (username && !friends.includes(username)) {
-        friends.push(username);
-        localStorage.setItem('friends', JSON.stringify(friends));
-        
-        // Добавляем друга в базу данных
-        database.ref(`users/${userId}/friends`).set(friends);
-        
-        renderFriends();
-        friendUsernameInput.value = '';
-    }
-});
 
 // Приглашение друга
 inviteFriendBtn.addEventListener('click', () => {
@@ -199,16 +253,27 @@ renderFriends();
 database.ref(`users/${userId}`).once('value')
     .then((snapshot) => {
         const userData = snapshot.val() || {};
+        
+        // Сохраняем username пользователя
+        if (tg.initDataUnsafe?.user?.username) {
+            database.ref(`users/${userId}`).update({
+                username: tg.initDataUnsafe.user.username
+            });
+        }
+        
+        // Восстанавливаем время старта
         if (userData.startTime) {
             startTime = userData.startTime;
-            localStorage.setItem('startTime', startTime);
             startBtn.style.display = 'none';
             resetBtn.style.display = 'inline';
             startRealtimeTimer();
         }
+        
+        // Восстанавливаем список друзей
         if (userData.friends) {
             friends = userData.friends;
             localStorage.setItem('friends', JSON.stringify(friends));
-            renderFriends();
         }
+        
+        renderFriends();
     });

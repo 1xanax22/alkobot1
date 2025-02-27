@@ -196,6 +196,47 @@ li {
     margin: 10px 0;
 }
 
+.friend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
+    padding: 10px 15px;
+    background-color: #3d3d3d;
+    border-radius: 10px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.friend-name {
+    flex: 1;
+    text-align: left;
+    margin-right: 10px;
+}
+
+.friend-time {
+    padding: 4px 8px;
+    background: rgba(0, 204, 0, 0.2);
+    border-radius: 5px;
+    font-size: 0.9em;
+    margin-right: 10px;
+}
+
+.delete-friend {
+    padding: 4px 8px;
+    margin: 0;
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff4444;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.delete-friend:hover {
+    background: rgba(255, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
