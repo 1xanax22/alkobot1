@@ -31,6 +31,8 @@ const navStats = document.getElementById('navStats');
 const homeScreen = document.getElementById('homeScreen');
 const statsScreen = document.getElementById('statsScreen');
 const statsContent = document.getElementById('statsContent');
+const setDateBtn = document.getElementById('setDateBtn');
+const customDateInput = document.getElementById('customDate');
 
 // Получение ID пользователя из Telegram
 const userId = tg.initDataUnsafe?.user?.id || 'anonymous';
@@ -102,6 +104,28 @@ resetBtn.addEventListener('click', () => {
     updateTimer();
 });
 
+// Обработчик выбора даты
+setDateBtn.addEventListener('click', () => {
+    customDateInput.style.display = 'block';
+    customDateInput.focus();
+});
+
+customDateInput.addEventListener('change', () => {
+    const selectedDate = new Date(customDateInput.value);
+    startTime = selectedDate.toISOString();
+    localStorage.setItem('startTime', startTime);
+    
+    // Сохраняем в базу данных
+    database.ref(`users/${userId}`).update({
+        startTime: startTime
+    });
+
+    startBtn.style.display = 'none';
+    resetBtn.style.display = 'inline';
+    customDateInput.style.display = 'none';
+    startRealtimeTimer();
+});
+
 // Функция для рендеринга списка друзей
 function renderFriends() {
     friendsList.innerHTML = '';
@@ -110,22 +134,37 @@ function renderFriends() {
         li.className = 'friend-item';
         
         // Получаем время друга из базы данных
-        database.ref(`users`).orderByChild('username').equalTo(friend).once('value')
+        database.ref('users').once('value')
             .then((snapshot) => {
-                const userData = snapshot.val();
-                const userId = Object.keys(userData)[0];
-                const startTime = userData[userId]?.startTime;
+                const users = snapshot.val();
+                let foundUser = null;
                 
-                const time = calculateTime(startTime);
-                const timeStr = startTime ? 
-                    `${time.days}д ${time.hours}ч ${time.minutes}м` : 
-                    'Не начал';
+                // Ищем пользователя по username
+                for (const uid in users) {
+                    if (users[uid].username === friend) {
+                        foundUser = users[uid];
+                        break;
+                    }
+                }
                 
-                li.innerHTML = `
-                    <span class="friend-name">${friend}</span>
-                    <span class="friend-time">${timeStr}</span>
-                    <button class="delete-friend" data-index="${index}">✕</button>
-                `;
+                if (foundUser) {
+                    const time = calculateTime(foundUser.startTime);
+                    const timeStr = foundUser.startTime ? 
+                        `${time.days}д ${time.hours}ч ${time.minutes}м` : 
+                        'Не начал';
+                    
+                    li.innerHTML = `
+                        <span class="friend-name">${friend}</span>
+                        <span class="friend-time">${timeStr}</span>
+                        <button class="delete-friend" data-index="${index}">✕</button>
+                    `;
+                } else {
+                    li.innerHTML = `
+                        <span class="friend-name">${friend}</span>
+                        <span class="friend-time">Не найден</span>
+                        <button class="delete-friend" data-index="${index}">✕</button>
+                    `;
+                }
             })
             .catch(error => {
                 console.error('Ошибка при загрузке времени друга:', error);
@@ -142,29 +181,50 @@ function renderFriends() {
 
 // Добавление друга
 addFriendBtn.addEventListener('click', () => {
-    const username = friendUsernameInput.value.trim();
-    if (username && !friends.includes(username)) {
-        // Проверяем существование пользователя
-        database.ref('users').orderByChild('username').equalTo(username).once('value')
-            .then((snapshot) => {
-                if (snapshot.exists()) {
-                    friends.push(username);
-                    localStorage.setItem('friends', JSON.stringify(friends));
-                    
-                    // Добавляем друга в базу данных
-                    database.ref(`users/${userId}/friends`).set(friends);
-                    
-                    renderFriends();
-                    friendUsernameInput.value = '';
-                } else {
-                    alert('Пользователь не найден');
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при проверке пользователя:', error);
-                alert('Ошибка при добавлении друга');
-            });
+    let username = friendUsernameInput.value.trim();
+    if (!username) return;
+    
+    // Удаляем @ если есть
+    if (username.startsWith('@')) {
+        username = username.substring(1);
     }
+    
+    if (friends.includes(username)) {
+        alert('Этот друг уже добавлен');
+        return;
+    }
+
+    // Проверяем существование пользователя
+    database.ref('users').once('value')
+        .then((snapshot) => {
+            const users = snapshot.val();
+            let userExists = false;
+            
+            // Ищем пользователя по username
+            for (const uid in users) {
+                if (users[uid].username === username) {
+                    userExists = true;
+                    break;
+                }
+            }
+            
+            if (userExists) {
+                friends.push(username);
+                localStorage.setItem('friends', JSON.stringify(friends));
+                
+                // Добавляем друга в базу данных
+                database.ref(`users/${userId}/friends`).set(friends);
+                
+                renderFriends();
+                friendUsernameInput.value = '';
+            } else {
+                alert('Пользователь еще не использовал приложение');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при проверке пользователя:', error);
+            alert('Ошибка при добавлении друга');
+        });
 });
 
 // Обработчик удаления друзей
