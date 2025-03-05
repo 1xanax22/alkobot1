@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Не пью!</title>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Главный экран (таймер и друзья) -->
+        <div id="homeScreen" class="screen active">
+            <h1>Не пью<span class="emoji">👊</span></h1>
+            <div class="timer" id="timer">Нажми "Старт"</div>
+            <div class="button-group">
+                <button id="startBtn">Старт</button>
+                <button id="resetBtn" style="display: none;">Сбросить</button>
+                <button id="setDateBtn">Выбрать дату</button>
+            </div>
+            <h2>Топ друзей<span class="emoji"> 🥃</span></h2>
+            <div class="friends-section">
+                <div class="add-friend-form">
+                    <input type="text" id="friendUsername" class="friend-input" placeholder="Ник (с @ или без)" />
+                    <button id="addFriendBtn">Добавить</button>
+                </div>
+                <div class="friends-list-container">
+                    <ul id="friendsList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Экран статистики -->
+        <div id="statsScreen" class="screen">
+            <div class="stats-container">
+                <h2>Статистика друзей <span> 🥃</span></h2>
+                <div id="statsContent"></div>
+                
+                <div class="friends-section">
+                    <div class="add-friend-form">
+                        <input type="text" id="friendUsernameStats" class="friend-input" placeholder="Ник (с @ или без)" />
+                        <button id="addFriendBtnStats" class="add-friend-btn">Добавить</button>
+                    </div>
+                    <ul id="friendsListStats"></ul>
+                    <div class="invite-section">
+                        <button id="inviteFriendBtn">Пригласить друга 🤝</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Экран календаря -->
+        <div id="calendarScreen" class="screen">
+            <h1>Календарь<span class="emoji">📅</span></h1>
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="nav-arrow" id="prevMonth">←</button>
+                    <h2 id="monthYear">Март 2025</h2>
+                    <button class="nav-arrow" id="nextMonth">→</button>
+                </div>
+                <div class="weekdays-grid">
+                    <div class="weekday">Пн</div>
+                    <div class="weekday">Вт</div>
+                    <div class="weekday">Ср</div>
+                    <div class="weekday">Чт</div>
+                    <div class="weekday">Пт</div>
+                    <div class="weekday">Сб</div>
+                    <div class="weekday">Вс</div>
+                </div>
+                <div class="calendar-slider">
+                    <div class="calendar-slide">
+                        <div id="calendar" class="days-grid month-grid"></div>
+                    </div>
+                </div>
+                <div class="calendar-controls">
+                    <button id="lightBtn" class="drink-btn light" data-type="light">🍺</button>
+                    <button id="mediumBtn" class="drink-btn medium" data-type="medium">🍷</button>
+                    <button id="strongBtn" class="drink-btn strong" data-type="strong">🥃</button>
+                    <button id="resetBtn" class="drink-btn reset">❌</button>
+                    <button id="soberBtn" class="drink-btn sober" data-type="sober">✅</button>
+                </div>
+            </div>
+        </div>
+        <!-- Экран достижений -->
+        <div id="achievementsScreen" class="screen">
+            <div class="achievements-header">
+                <h1>Статистика<span class="emoji">🏆</span></h1>
+            </div>
+
+            <div class="progress-block">
+                <div class="progress-header">
+                    <div class="icon">🎯</div>
+                    <div class="title">Ваш прогресс</div>
+                </div>
+                <div class="progress-stats">
+                    <div class="progress-item">
+                        <div class="value current-streak">0</div>
+                        <div class="label">Текущая серия</div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="value best-streak">0</div>
+                        <div class="label">Лучшая серия</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-progress">
+                <div class="stats-grid">
+                    <div class="stat-item money">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-value money-value">0 ₽</div>
+                            <div class="stat-label">Сэкономлено</div>
+                        </div>
+                    </div>
+                    <div class="stat-item life">
+                        <div class="stat-icon">⌛</div>
+                        <div class="stat-content">
+                            <div class="stat-value life-value">0 дней</div>
+                            <div class="stat-label">Жизнь продлена</div>
+                        </div>
+                    </div>
+                    <div class="stat-item health">
+                        <div class="stat-icon">❤️</div>
+                        <div class="stat-content">
+                            <div class="stat-value health-value">0%</div>
+                            <div class="stat-label">Здоровье</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>       
+        <!-- Навигация -->
+        <nav class="bottom-nav">
+            <button class="nav-btn" data-screen="homeScreen">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">Главная</span>
+            </button>
+            <button class="nav-btn" data-screen="statsScreen">
+                <span class="nav-icon">⭐️</span>
+                <span class="nav-text">Друзья</span>
+            </button>
+            <button class="nav-btn" data-screen="calendarScreen">
+                <span class="nav-icon">📅</span>
+                <span class="nav-text">Календарь</span>
+            </button>
+            <button class="nav-btn" data-screen="achievementsScreen">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Статистика</span>
+            </button>
+        </nav>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

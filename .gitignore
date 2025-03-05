@@ -1,0 +1,14 @@
+.vercel
+# Firebase
+serviceAccountKey.json
+.env
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
